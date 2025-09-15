@@ -1,14 +1,50 @@
-//import express library
 const express = require('express');
 
-//create an instance of express
 const app = express();
-//port on which the server will run
+
 const PORT = 3000;
 
 app.use(express.json());
 
-app.post('plugin-law', async (req, res) => {
+// Placeholder function to get row count - replace with your actual implementation
+const obtenerNumeroFilas = async () => {
+  try {
+    // This is a placeholder - implement your actual logic here
+    // For example: Google Sheets API, database query, etc.
+    console.log("Getting row count...");
+    // Return a mock value for demonstration
+    return Math.floor(Math.random() * 1000) + 1;
+  } catch (error) {
+    console.error("Error getting row count:", error);
+    throw error;
+  }
+};
+
+// Placeholder function to add a row - replace with your actual implementation
+const agregarFila = async (rowData) => {
+  try {
+    // This is a placeholder - implement your actual logic here
+    // For example: Google Sheets API, database insert, etc.
+    console.log("Adding row with data:", rowData);
+    
+    // Simulate successful operation (80% success rate for demo)
+    const success = Math.random() > 0.2;
+    
+    if (success) {
+      console.log("Row added successfully");
+      return true;
+    } else {
+      console.log("Failed to add row");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error adding row:", error);
+    return false;
+  }
+};
+
+// Route to handle appointment creation
+app.post('/plugin-law', async (req, res) => {
   try {
     const {
       nombre,
@@ -25,16 +61,19 @@ app.post('plugin-law', async (req, res) => {
       });
     }
 
+    // Log received data
+    console.log("Received appointment data:");
     console.log("Nombre: ", nombre);
     console.log("Número de contacto: ", numero_contacto);
     console.log("Email: ", email);
     console.log("Fecha: ", fecha);
     console.log("Hora: ", hora);
 
+    // Get row count and generate appointment code
     const num_registros = await obtenerNumeroFilas();
     const appointment_code = `CRDYNA${num_registros}`;
 
-    // Create new row in sheets (adjust column order according to your spreadsheet)
+    // Create new row data
     const row_data = [
       appointment_code,
       nombre,
@@ -44,9 +83,11 @@ app.post('plugin-law', async (req, res) => {
       hora
     ];
 
-    // const response_add_row = await agregarFila(row_data);
+    // Add row to database/sheets
+    const response_add_row = await agregarFila(row_data);
 
     if (response_add_row) {
+      // Success response
       const rawData = {
         "estado_reservacion": "Generada exitosamente",
         "codigo_reservacion": appointment_code,
@@ -67,7 +108,7 @@ app.post('plugin-law', async (req, res) => {
       description += `• 📧 Email: ${email}\n`;
       description += `• 📆 Fecha: ${fecha}\n`;
       description += `• ⏰ Hora: ${hora}\n\n`;
-      description += `Por Videollamada`;
+      description += `Por Videollamada\n`;
       description += `📞 Tel: XX XXXX XXXX\n`;
       description += `🕐 Horarios: Lunes-Viernes 9:00-18:00 • fines de semana únicamente para asuntos urgentes y bajo confirmación expresa.\n\n`;
 
@@ -77,6 +118,7 @@ app.post('plugin-law', async (req, res) => {
         desc: description
       });
     } else {
+      // Failure response
       const rawData = {
         "estado_reservacion": "No se pudo generar",
         "codigo_reservacion": appointment_code,
@@ -89,7 +131,7 @@ app.post('plugin-law', async (req, res) => {
         }
       };
 
-      let description = `Ocurrio un error, y no pudimos ajendar la sita\n\n`;
+      let description = `Ocurrió un error, y no pudimos agendar la cita\n\n`;
       description += `🔑 Código de intento: **${appointment_code}**\n\n`;
       description += `📋 Detalles que intentó registrar:\n`;
       description += `• 👤 Nombre: ${nombre}\n`;
@@ -108,10 +150,30 @@ app.post('plugin-law', async (req, res) => {
   } catch (error) {
     console.error("Error creating appointment:", error);
     res.status(500).json({
-      error: "Internal server error"
+      error: "Internal server error",
+      message: error.message
     });
   }
 });
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Server is running' });
+});
+
+// Initialize server
+app.listen(PORT, (error) => {
+  if (!error) {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+    console.log(`Endpoint: POST http://localhost:${PORT}/plugin-law`);
+  } else {
+    console.log("Error occurred, server can't start", error);
+  }
+});
+
+// Export app for testing purposes
+module.exports = app;
 
 //initialize server with app.listen method, if there are no errors when initializing
 //the server then it will print succesfully in the console, if not then print error
