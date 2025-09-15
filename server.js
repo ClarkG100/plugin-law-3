@@ -8,53 +8,110 @@ const PORT = 3000;
 
 app.use(express.json());
 
-app.post('/plugin-law', (req, res) => {
-    //get info from the json sent in the request
+app.post('plugin-law', async (req, res) => {
+  try {
     const {
-        name,
-        age,
-        phone_number
+      nombre,
+      numero_contacto,
+      email,
+      fecha,
+      hora
     } = req.body;
 
-    /*You can do some process here
-        Like check data on a database
-        Check user info
-        Send email
-        Add row to gsheets or mysql database
-    */
-    //output format
-    /*
-        Plugin endpoints should always return info with this template:
-        {
-            //raw parameter can have a json of general info about the result
-            raw: {
-                success: true,
-                client_name: name,
-                client_age: age,
-                result: "The user was added to the database successfully"
-            },
-            //type is the type of info you're gonna return, this can be either "markdown" (string data that can be rendered with gpt-ish markdown like |...|...| for tables) or "chart" (graph data, like piecharts, bar-charts)
-            type: "markdown"
-            //markdown parameter is the info that you're gonna return in the markdown format, this has to be with the typical markdown of chatgpt |...|...|. For now we leave it like "..." as we do not want to render info with a certain format
-            markdown: "...",
-            //desc is a string of plain text that is gonna be shown on the chat, this can also have a markdown for example bold letter with **[text]**, lists 1.[text] 2.[text] 3.[text]
-            "desc": "Se registro correctamente "
+    // Validate required fields
+    if (!nombre || !numero_contacto || !email || !fecha || !hora) {
+      return res.status(400).json({
+        error: "Missing required fields: name, phone, email, date, time"
+      });
+    }
 
+    console.log("Nombre: ", nombre);
+    console.log("Número de contacto: ", numero_contacto);
+    console.log("Email: ", email);
+    console.log("Fecha: ", fecha);
+    console.log("Hora: ", hora);
+
+    const num_registros = await obtenerNumeroFilas();
+    const appointment_code = `CRDYNA${num_registros}`;
+
+    // Create new row in sheets (adjust column order according to your spreadsheet)
+    const row_data = [
+      appointment_code,
+      nombre,
+      numero_contacto,
+      email,
+      fecha,
+      hora
+    ];
+
+    // const response_add_row = await agregarFila(row_data);
+
+    if (response_add_row) {
+      const rawData = {
+        "estado_reservacion": "Generada exitosamente",
+        "codigo_reservacion": appointment_code,
+        "datos_reserva": {
+          "nombre": nombre,
+          "email": email,
+          "telefono": numero_contacto,
+          "fecha": fecha,
+          "hora": hora
         }
-    */
+      };
 
-    res.json({
-        raw: {
-            success: true,
-            client_name: name,
-            client_age: age,
-            result: "The user was added to the database successfully"
-        },
-        markdown: "...",
+      let description = `📅 ¡Su reservación ha sido generada exitosamente!\n\n`;
+      description += `🔑 Código de reservación: **${appointment_code}**\n\n`;
+      description += `📋 Detalles de su reservación:\n`;
+      description += `• 👤 Nombre: ${nombre}\n`;
+      description += `• 📞 Teléfono: ${numero_contacto}\n`;
+      description += `• 📧 Email: ${email}\n`;
+      description += `• 📆 Fecha: ${fecha}\n`;
+      description += `• ⏰ Hora: ${hora}\n\n`;
+      description += `Por Videollamada`;
+      description += `📞 Tel: XX XXXX XXXX\n`;
+      description += `🕐 Horarios: Lunes-Viernes 9:00-18:00 • fines de semana únicamente para asuntos urgentes y bajo confirmación expresa.\n\n`;
+
+      res.json({
+        raw: rawData,
         type: "markdown",
-        desc: `Se registro correctamente a *${name}*, con numero de contacto *${phone_number}* y edad ${age}`
+        desc: description
+      });
+    } else {
+      const rawData = {
+        "estado_reservacion": "No se pudo generar",
+        "codigo_reservacion": appointment_code,
+        "datos_reserva": {
+          "nombre": nombre,
+          "email": email,
+          "telefono": numero_contacto,
+          "fecha": fecha,
+          "hora": hora
+        }
+      };
+
+      let description = `Ocurrio un error, y no pudimos ajendar la sita\n\n`;
+      description += `🔑 Código de intento: **${appointment_code}**\n\n`;
+      description += `📋 Detalles que intentó registrar:\n`;
+      description += `• 👤 Nombre: ${nombre}\n`;
+      description += `• 📞 Teléfono: ${numero_contacto}\n`;
+      description += `• 📧 Email: ${email}\n`;
+      description += `• 📆 Fecha: ${fecha}\n`;
+      description += `• ⏰ Hora: ${hora}\n\n`;
+      description += `Por favor, intente nuevamente 🙏 \n\n`;
+
+      res.json({
+        raw: rawData,
+        type: "markdown",
+        desc: description
+      });
+    }
+  } catch (error) {
+    console.error("Error creating appointment:", error);
+    res.status(500).json({
+      error: "Internal server error"
     });
-})
+  }
+});
 
 //initialize server with app.listen method, if there are no errors when initializing
 //the server then it will print succesfully in the console, if not then print error
