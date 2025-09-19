@@ -173,14 +173,3 @@ app.listen(PORT, (error) => {
 });
 
 // Export app for testing purposes
-module.exports = app;
-
-//initialize server with app.listen method, if there are no errors when initializing
-//the server then it will print succesfully in the console, if not then print error
-app.listen(PORT, (error) => {
-    if (!error)
-        console.log(`Server running on http://localhost:${PORT}`);
-    else
-        console.log("Error occurred, server can't start", error);
-}
-);
