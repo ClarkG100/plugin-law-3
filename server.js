@@ -115,6 +115,7 @@ app.post('/plugin-law', async (req, res) => {
 
       res.json({
         raw: rawData,
+        markdown: "...",
         type: "markdown",
         desc: description
       });
@@ -144,6 +145,7 @@ app.post('/plugin-law', async (req, res) => {
 
       res.json({
         raw: rawData,
+        markdown: "...",
         type: "markdown",
         desc: description
       });
