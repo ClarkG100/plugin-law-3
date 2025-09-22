@@ -109,8 +109,8 @@ app.post('/plugin-law', async (req, res) => {
       description += `• 📆 Fecha de consulta: ${fecha}\n`;
       description += `• ⏰ Hora de consulta: ${hora}\n\n`;
       description += `Modalidad: Videollamada legal\n`;
-      description += `📞 Teléfono del bufete: +1 (555) 123-4567\n`;
-      description += `🕐 Horarios de atención: Lunes-Viernes 9:00-18:00 • Sábados 10:00-14:00 (solo consultas urgentes)\n\n`;
+      description += `📞 Teléfono del bufete: (+52) 55-3141-1891\n`;
+      description += `🕐 Horarios de atención: Lunes-Viernes 9:00-18:00\nFines de semana únicamente para asuntos urgentes y bajo confirmación expresa.\n\n`;
       description += `💼 Documentación requerida: Favor traer identificación y cualquier documento relevante a su caso.\n\n`;
 
       res.json({
@@ -141,7 +141,7 @@ app.post('/plugin-law', async (req, res) => {
       description += `• 📧 Email: ${email}\n`;
       description += `• 📆 Fecha deseada: ${fecha}\n`;
       description += `• ⏰ Hora deseada: ${hora}\n\n`;
-      description += `Por favor, contacte a nuestro departamento de citas al +1 (555) 123-4567 o intente nuevamente. 🙏 \n\n`;
+      description += `Por favor, contacte a nuestro departamento de citas al (+52) 55-3141-1891 o intente nuevamente. 🙏 \n\n`;
 
       res.json({
         raw: rawData,
