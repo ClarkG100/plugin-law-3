@@ -120,13 +120,6 @@ app.post('/case-information', async (req, res) => {
         }
       };
 
-      const urgencyEmoji = {
-        'baja': '🟢',
-        'media': '🟡',
-        'alta': '🟠',
-        'critica': '🔴'
-      };
-
       const urgenciaLower = urgencia.toLowerCase();
       const emoji = urgencyEmoji[urgenciaLower] || '⚠️';
 
