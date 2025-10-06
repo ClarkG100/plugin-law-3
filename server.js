@@ -83,14 +83,6 @@ app.post('/case-information', async (req, res) => {
       });
     }
 
-    // Validate urgency level
-    const validUrgency = ['baja', 'media', 'alta', 'critica'];
-    if (!validUrgency.includes(urgencia.toLowerCase())) {
-      return res.status(400).json({
-        error: "Urgency must be one of: baja, media, alta, critica"
-      });
-    }
-
     // Log received data
     console.log("Received case data:");
     console.log("Nombre del cliente: ", nombre);
@@ -135,13 +127,16 @@ app.post('/case-information', async (req, res) => {
         'critica': '🔴'
       };
 
+      const urgenciaLower = urgencia.toLowerCase();
+      const emoji = urgencyEmoji[urgenciaLower] || '⚠️';
+
       let description = `✅ Datos del caso recopilados exitosamente\n\n`;
       description += `🔑 Código de caso: **${case_code}**\n\n`;
       description += `📋 Información registrada:\n`;
       description += `• 👤 Cliente: ${nombre}\n`;
       description += `• ⚖️ Tipo de caso: ${tipo_caso}\n`;
       description += `• 📝 Resumen: ${resumen_caso}\n`;
-      description += `• ${urgencyEmoji[urgencia.toLowerCase()]} Urgencia: ${urgencia.toUpperCase()}\n\n`;
+      description += `• ${emoji} Urgencia: ${urgencia.toUpperCase()}\n\n`;
       description += `📞 Un abogado se pondrá en contacto con usted pronto.\n`;
       description += `💼 Teléfono del bufete: (+52) 55-3141-1891\n`;
 
@@ -304,7 +299,7 @@ app.listen(PORT, (error) => {
   if (!error) {
     console.log(`Legal consultation server running on http://localhost:${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/health`);
-    console.log(`Data collection: POST http://localhost:${PORT}case_information`);
+    console.log(`Data collection: POST http://localhost:${PORT}/case_information`);
     console.log(`Create appointment: POST http://localhost:${PORT}/create-appointment`);
   } else {
     console.log("Error occurred, server can't start", error);
