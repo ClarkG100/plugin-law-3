@@ -43,8 +43,143 @@ const agregarFila = async (rowData) => {
   }
 };
 
-// Route to handle legal consultation scheduling
-app.post('/plugin-law', async (req, res) => {
+// Placeholder function to store collected case data - replace with your actual implementation
+const guardarDatosRecopilados = async (caseData) => {
+  try {
+    // This is a placeholder - implement your actual logic here
+    // For example: Database insert, CRM system, etc.
+    console.log("Storing collected case data:", caseData);
+    
+    // Simulate successful operation (85% success rate for demo)
+    const success = Math.random() > 0.15;
+    
+    if (success) {
+      console.log("Case data stored successfully");
+      return true;
+    } else {
+      console.log("Failed to store case data");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error storing case data:", error);
+    return false;
+  }
+};
+
+// Route to collect initial case data
+app.post('/case-information', async (req, res) => {
+  try {
+    const {
+      nombre,
+      tipo_caso,
+      resumen_caso,
+      urgencia
+    } = req.body;
+
+    // Validate required fields
+    if (!nombre || !tipo_caso || !resumen_caso || !urgencia) {
+      return res.status(400).json({
+        error: "Missing required fields: name, case type, case summary, urgency"
+      });
+    }
+
+    // Validate urgency level
+    const validUrgency = ['baja', 'media', 'alta', 'critica'];
+    if (!validUrgency.includes(urgencia.toLowerCase())) {
+      return res.status(400).json({
+        error: "Urgency must be one of: baja, media, alta, critica"
+      });
+    }
+
+    // Log received data
+    console.log("Received case data:");
+    console.log("Nombre del cliente: ", nombre);
+    console.log("Tipo de caso: ", tipo_caso);
+    console.log("Resumen del caso: ", resumen_caso);
+    console.log("Urgencia: ", urgencia);
+
+    // Get case count and generate case code
+    const num_registros = await obtenerNumeroFilas();
+    const case_code = `CASE${num_registros}`;
+
+    // Create case data object
+    const case_data = {
+      codigo_caso: case_code,
+      nombre_cliente: nombre,
+      tipo_caso: tipo_caso,
+      resumen_caso: resumen_caso,
+      urgencia: urgencia.toLowerCase(),
+      fecha_registro: new Date().toISOString()
+    };
+
+    // Store case data
+    const response_store = await guardarDatosRecopilados(case_data);
+
+    if (response_store) {
+      // Success response
+      const rawData = {
+        "estado": "Datos recopilados exitosamente",
+        "codigo_caso": case_code,
+        "datos_caso": {
+          "nombre_cliente": nombre,
+          "tipo_caso": tipo_caso,
+          "resumen_caso": resumen_caso,
+          "urgencia": urgencia
+        }
+      };
+
+      const urgencyEmoji = {
+        'baja': '🟢',
+        'media': '🟡',
+        'alta': '🟠',
+        'critica': '🔴'
+      };
+
+      let description = `✅ Datos del caso recopilados exitosamente\n\n`;
+      description += `🔑 Código de caso: **${case_code}**\n\n`;
+      description += `📋 Información registrada:\n`;
+      description += `• 👤 Cliente: ${nombre}\n`;
+      description += `• ⚖️ Tipo de caso: ${tipo_caso}\n`;
+      description += `• 📝 Resumen: ${resumen_caso}\n`;
+      description += `• ${urgencyEmoji[urgencia.toLowerCase()]} Urgencia: ${urgencia.toUpperCase()}\n\n`;
+      description += `📞 Un abogado se pondrá en contacto con usted pronto.\n`;
+      description += `💼 Teléfono del bufete: (+52) 55-3141-1891\n`;
+
+      res.json({
+        raw: rawData,
+        markdown: "...",
+        type: "markdown",
+        desc: description
+      });
+    } else {
+      // Failure response
+      const rawData = {
+        "estado": "Error al recopilar datos",
+        "codigo_caso": case_code
+      };
+
+      let description = `❌ Ocurrió un error al registrar los datos del caso\n\n`;
+      description += `🔑 Código de intento: **${case_code}**\n\n`;
+      description += `Por favor, contacte directamente al (+52) 55-3141-1891 para registrar su caso. 🙏\n`;
+
+      res.json({
+        raw: rawData,
+        markdown: "...",
+        type: "markdown",
+        desc: description
+      });
+    }
+  } catch (error) {
+    console.error("Error collecting case data:", error);
+    res.status(500).json({
+      error: "Error interno del sistema",
+      message: error.message
+    });
+  }
+});
+
+// Route to create/schedule a legal consultation appointment (renamed from /plugin-law)
+app.post('/create-appointment', async (req, res) => {
   try {
     const {
       nombre,
@@ -169,10 +304,12 @@ app.listen(PORT, (error) => {
   if (!error) {
     console.log(`Legal consultation server running on http://localhost:${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/health`);
-    console.log(`Endpoint: POST http://localhost:${PORT}/plugin-law`);
+    console.log(`Data collection: POST http://localhost:${PORT}case_information`);
+    console.log(`Create appointment: POST http://localhost:${PORT}/create-appointment`);
   } else {
     console.log("Error occurred, server can't start", error);
   }
 });
 
 // Export app for testing purposes
+module.exports = app;
