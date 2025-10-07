@@ -6,13 +6,24 @@ const PORT = 3000;
 
 app.use(express.json());
 
-// Urgency emoji mapping
+// Time frame emoji mapping (Spanish time frames)
 const urgencyEmoji = {
-  'baja': '🟢',
-  'media': '🟡',
-  'alta': '🟠',
-  'crítica': '🔴',
-  'urgente': '🔴'
+  'inmediato': '🔴',
+  'hoy': '🔴',
+  'mañana': '🔴',
+  'esta semana': '🟠',
+  'una semana': '🟠',
+  '1 semana': '🟠',
+  'dos semanas': '🟡',
+  '2 semanas': '🟡',
+  'tres semanas': '🟡',
+  '3 semanas': '🟡',
+  'un mes': '🟢',
+  '1 mes': '🟢',
+  'dos meses': '🟢',
+  '2 meses': '🟢',
+  'más de un mes': '🟢',
+  'no urgente': '🟢'
 };
 
 // Placeholder function to get case count - replace with your actual implementation
@@ -190,21 +201,22 @@ app.post('/create-appointment', async (req, res) => {
       const emoji = urgencyEmoji[urgenciaLower] || '⚠️';
 
       let description = `✅ ¡Su consulta legal y caso han sido registrados exitosamente!\n\n`;
-      description += `Código de consulta: **${consultation_code}**\n`;
-      description += `Código de caso: **${case_code}**\n`;
+      description += `🔑 Código de consulta: **${consultation_code}**\n`;
+      description += `🔑 Código de caso: **${case_code}**\n\n`;
       description += `📋 Detalles de su consulta:\n`;
       description += `• Nombre del cliente: ${nombre}\n`;
       description += `• Teléfono: ${numero_contacto}\n`;
-      description += `• Correo: ${email}\n`;
-      description += `• Fecha: ${fecha}\n`;
-      description += `• Hora: ${hora}\n\n`;
+      description += `• Email: ${email}\n`;
+      description += `• Fecha de consulta: ${fecha}\n`;
+      description += `• Hora de consulta: ${hora}\n\n`;
       description += `📋 Información del caso:\n`;
-      description += `• Tipo de caso: ${tipo_caso}\n`;
-      description += `• Resumen: ${resumen_caso}\n`;
-      description += `• ${emoji} Urgencia: ${urgencia.toUpperCase()}\n\n`;
+      description += `• ⚖️ Tipo de caso: ${tipo_caso}\n`;
+      description += `• 📝 Resumen: ${resumen_caso}\n`;
+      description += `• ${emoji} Plazo deseado: ${urgencia}\n\n`;
       description += `Modalidad: Videollamada legal\n`;
-      description += `📞 Teléfono del bufete: (+52) 55-3141-1891\n • Lunes-Viernes 9:00-18:00`;
-      description += `💼 Documentación requerida: Favor traer identificación y cualquier documento relevante a su caso.\n\n`;
+      description += `📞 Teléfono del bufete: (+52) 55-3141-1891\n`;
+      description += `🕐 Lunes-Viernes 9:00-18:00`;
+      description += `💼 Documentación requerida: Favor traer identificación y cualquier documento relevante a su caso.`;
 
       res.json({
         raw: rawData,
@@ -246,7 +258,7 @@ app.post('/create-appointment', async (req, res) => {
       description += `• ⏰ Hora deseada: ${hora}\n`;
       description += `• ⚖️ Tipo de caso: ${tipo_caso}\n`;
       description += `• 📝 Resumen: ${resumen_caso}\n`;
-      description += `• ${emoji} Urgencia: ${urgencia.toUpperCase()}\n\n`;
+      description += `• ${emoji} Plazo deseado: ${urgencia}\n\n`;
       description += `Por favor, contacte directamente al (+52) 55-3141-1891 para registrar su caso y consulta. 🙏\n\n`;
 
       res.json({
