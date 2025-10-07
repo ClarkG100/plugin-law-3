@@ -213,9 +213,9 @@ app.post('/create-appointment', async (req, res) => {
       description += `• ⚖️ Tipo de caso: ${tipo_caso}\n`;
       description += `• 📝 Resumen: ${resumen_caso}\n`;
       description += `• ${emoji} Plazo deseado: ${urgencia}\n\n`;
-      description += `Modalidad: Videollamada legal\n`;
+      description += `Videollamada legal\n`;
       description += `📞 Teléfono del bufete: (+52) 55-3141-1891\n`;
-      description += `🕐 Lunes-Viernes 9:00-18:00`;
+      description += `🕐 Lunes-Viernes 9:00-18:00\n`;
       description += `💼 Documentación requerida: Favor traer identificación y cualquier documento relevante a su caso.`;
 
       res.json({
