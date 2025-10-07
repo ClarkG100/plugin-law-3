@@ -6,6 +6,15 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Urgency emoji mapping
+const urgencyEmoji = {
+  'baja': '🟢',
+  'media': '🟡',
+  'alta': '🟠',
+  'crítica': '🔴',
+  'urgente': '🔴'
+};
+
 // Placeholder function to get case count - replace with your actual implementation
 const obtenerNumeroFilas = async () => {
   try {
@@ -78,8 +87,25 @@ app.post('/case-information', async (req, res) => {
 
     // Validate required fields
     if (!nombre || !tipo_caso || !resumen_caso || !urgencia) {
+      const rawData = {
+        "error": "Campos requeridos faltantes",
+        "campos_faltantes": []
+      };
+      
+      if (!nombre) rawData.campos_faltantes.push("nombre");
+      if (!tipo_caso) rawData.campos_faltantes.push("tipo_caso");
+      if (!resumen_caso) rawData.campos_faltantes.push("resumen_caso");
+      if (!urgencia) rawData.campos_faltantes.push("urgencia");
+
+      const description = `❌ Error: Faltan campos requeridos\n\n` +
+        `Por favor proporcione la siguiente información:\n` +
+        rawData.campos_faltantes.map(campo => `• ${campo}`).join('\n');
+
       return res.status(400).json({
-        error: "Missing required fields: name, case type, case summary, urgency"
+        raw: rawData,
+        markdown: "...",
+        type: "markdown",
+        desc: description
       });
     }
 
@@ -159,9 +185,22 @@ app.post('/case-information', async (req, res) => {
     }
   } catch (error) {
     console.error("Error collecting case data:", error);
+    
+    const rawData = {
+      "error": "Error interno del sistema",
+      "mensaje": error.message,
+      "timestamp": new Date().toISOString()
+    };
+
+    const description = `❌ Error interno del sistema\n\n` +
+      `Ocurrió un error inesperado. Por favor contacte al (+52) 55-3141-1891 para asistencia.\n\n` +
+      `Código de error: ${error.message}`;
+
     res.status(500).json({
-      error: "Error interno del sistema",
-      message: error.message
+      raw: rawData,
+      markdown: "...",
+      type: "markdown",
+      desc: description
     });
   }
 });
@@ -179,8 +218,26 @@ app.post('/create-appointment', async (req, res) => {
 
     // Validate required fields
     if (!nombre || !numero_contacto || !email || !fecha || !hora) {
+      const rawData = {
+        "error": "Campos requeridos faltantes",
+        "campos_faltantes": []
+      };
+      
+      if (!nombre) rawData.campos_faltantes.push("nombre");
+      if (!numero_contacto) rawData.campos_faltantes.push("numero_contacto");
+      if (!email) rawData.campos_faltantes.push("email");
+      if (!fecha) rawData.campos_faltantes.push("fecha");
+      if (!hora) rawData.campos_faltantes.push("hora");
+
+      const description = `❌ Error: Faltan campos requeridos para agendar la consulta\n\n` +
+        `Por favor proporcione la siguiente información:\n` +
+        rawData.campos_faltantes.map(campo => `• ${campo}`).join('\n');
+
       return res.status(400).json({
-        error: "Missing required fields: name, phone, email, date, time"
+        raw: rawData,
+        markdown: "...",
+        type: "markdown",
+        desc: description
       });
     }
 
@@ -275,16 +332,53 @@ app.post('/create-appointment', async (req, res) => {
     }
   } catch (error) {
     console.error("Error creating legal consultation:", error);
+    
+    const rawData = {
+      "error": "Error interno del sistema",
+      "mensaje": error.message,
+      "timestamp": new Date().toISOString()
+    };
+
+    const description = `❌ Error interno del sistema\n\n` +
+      `Ocurrió un error inesperado al agendar su consulta. Por favor contacte al (+52) 55-3141-1891 para asistencia.\n\n` +
+      `Código de error: ${error.message}`;
+
     res.status(500).json({
-      error: "Error interno del sistema",
-      message: error.message
+      raw: rawData,
+      markdown: "...",
+      type: "markdown",
+      desc: description
     });
   }
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Legal consultation server is running' });
+  const rawData = {
+    "status": "OK",
+    "message": "Legal consultation server is running",
+    "timestamp": new Date().toISOString(),
+    "endpoints": {
+      "case_information": "/case-information",
+      "create_appointment": "/create-appointment",
+      "health": "/health"
+    }
+  };
+
+  const description = `✅ Servidor en funcionamiento\n\n` +
+    `🖥️ Estado: OK\n` +
+    `⏰ Timestamp: ${rawData.timestamp}\n\n` +
+    `📡 Endpoints disponibles:\n` +
+    `• POST /case-information - Recopilar datos del caso\n` +
+    `• POST /create-appointment - Agendar consulta\n` +
+    `• GET /health - Verificar estado del servidor`;
+
+  res.json({
+    raw: rawData,
+    markdown: "...",
+    type: "markdown",
+    desc: description
+  });
 });
 
 // Initialize server
@@ -292,7 +386,7 @@ app.listen(PORT, (error) => {
   if (!error) {
     console.log(`Legal consultation server running on http://localhost:${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/health`);
-    console.log(`Data collection: POST http://localhost:${PORT}/case_information`);
+    console.log(`Data collection: POST http://localhost:${PORT}/case-information`);
     console.log(`Create appointment: POST http://localhost:${PORT}/create-appointment`);
   } else {
     console.log("Error occurred, server can't start", error);
