@@ -190,21 +190,20 @@ app.post('/create-appointment', async (req, res) => {
       const emoji = urgencyEmoji[urgenciaLower] || '⚠️';
 
       let description = `✅ ¡Su consulta legal y caso han sido registrados exitosamente!\n\n`;
-      description += `🔑 Código de consulta: **${consultation_code}**\n`;
-      description += `🔑 Código de caso: **${case_code}**\n\n`;
+      description += `Código de consulta: **${consultation_code}**\n`;
+      description += `Código de caso: **${case_code}**\n`;
       description += `📋 Detalles de su consulta:\n`;
-      description += `• 👤 Nombre del cliente: ${nombre}\n`;
-      description += `• 📞 Teléfono: ${numero_contacto}\n`;
-      description += `• 📧 Email: ${email}\n`;
-      description += `• 📆 Fecha de consulta: ${fecha}\n`;
-      description += `• ⏰ Hora de consulta: ${hora}\n\n`;
+      description += `• Nombre del cliente: ${nombre}\n`;
+      description += `• Teléfono: ${numero_contacto}\n`;
+      description += `• Correo: ${email}\n`;
+      description += `• Fecha: ${fecha}\n`;
+      description += `• Hora: ${hora}\n\n`;
       description += `📋 Información del caso:\n`;
-      description += `• ⚖️ Tipo de caso: ${tipo_caso}\n`;
-      description += `• 📝 Resumen: ${resumen_caso}\n`;
+      description += `• Tipo de caso: ${tipo_caso}\n`;
+      description += `• Resumen: ${resumen_caso}\n`;
       description += `• ${emoji} Urgencia: ${urgencia.toUpperCase()}\n\n`;
       description += `Modalidad: Videollamada legal\n`;
-      description += `📞 Teléfono del bufete: (+52) 55-3141-1891\n`;
-      description += `🕐 Horarios de atención: Lunes-Viernes 9:00-18:00\nFines de semana únicamente para asuntos urgentes y bajo confirmación expresa.\n\n`;
+      description += `📞 Teléfono del bufete: (+52) 55-3141-1891\n • Lunes-Viernes 9:00-18:00`;
       description += `💼 Documentación requerida: Favor traer identificación y cualquier documento relevante a su caso.\n\n`;
 
       res.json({
