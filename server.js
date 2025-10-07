@@ -75,137 +75,7 @@ const guardarDatosRecopilados = async (caseData) => {
   }
 };
 
-// Route to collect initial case data
-app.post('/case-information', async (req, res) => {
-  try {
-    const {
-      nombre,
-      tipo_caso,
-      resumen_caso,
-      urgencia
-    } = req.body;
-
-    // Validate required fields
-    if (!nombre || !tipo_caso || !resumen_caso || !urgencia) {
-      const rawData = {
-        "error": "Campos requeridos faltantes",
-        "campos_faltantes": []
-      };
-      
-      if (!nombre) rawData.campos_faltantes.push("nombre");
-      if (!tipo_caso) rawData.campos_faltantes.push("tipo_caso");
-      if (!resumen_caso) rawData.campos_faltantes.push("resumen_caso");
-      if (!urgencia) rawData.campos_faltantes.push("urgencia");
-
-      const description = `❌ Error: Faltan campos requeridos\n\n` +
-        `Por favor proporcione la siguiente información:\n` +
-        rawData.campos_faltantes.map(campo => `• ${campo}`).join('\n');
-
-      return res.status(400).json({
-        raw: rawData,
-        markdown: "...",
-        type: "markdown",
-        desc: description
-      });
-    }
-
-    // Log received data
-    console.log("Received case data:");
-    console.log("Nombre del cliente: ", nombre);
-    console.log("Tipo de caso: ", tipo_caso);
-    console.log("Resumen del caso: ", resumen_caso);
-    console.log("Urgencia: ", urgencia);
-
-    // Get case count and generate case code
-    const num_registros = await obtenerNumeroFilas();
-    const case_code = `CASE${num_registros}`;
-
-    // Create case data object
-    const case_data = {
-      codigo_caso: case_code,
-      nombre_cliente: nombre,
-      tipo_caso: tipo_caso,
-      resumen_caso: resumen_caso,
-      urgencia: urgencia.toLowerCase(),
-      fecha_registro: new Date().toISOString()
-    };
-
-    // Store case data
-    const response_store = await guardarDatosRecopilados(case_data);
-
-    if (response_store) {
-      // Success response
-      const rawData = {
-        "estado": "Datos recopilados exitosamente",
-        "codigo_caso": case_code,
-        "datos_caso": {
-          "nombre_cliente": nombre,
-          "tipo_caso": tipo_caso,
-          "resumen_caso": resumen_caso,
-          "urgencia": urgencia
-        }
-      };
-
-      const urgenciaLower = urgencia.toLowerCase();
-      const emoji = urgencyEmoji[urgenciaLower] || '⚠️';
-
-      let description = `✅ Datos del caso recopilados exitosamente\n\n`;
-      description += `🔑 Código de caso: **${case_code}**\n\n`;
-      description += `📋 Información registrada:\n`;
-      description += `• 👤 Cliente: ${nombre}\n`;
-      description += `• ⚖️ Tipo de caso: ${tipo_caso}\n`;
-      description += `• 📝 Resumen: ${resumen_caso}\n`;
-      description += `• ${emoji} Urgencia: ${urgencia.toUpperCase()}\n\n`;
-      description += `📞 Un abogado se pondrá en contacto con usted pronto.\n`;
-      description += `💼 Teléfono del bufete: (+52) 55-3141-1891\n`;
-
-      res.json({
-        raw: rawData,
-        markdown: "...",
-        type: "markdown",
-        desc: description
-      });
-    } else {
-      // Failure response
-      const rawData = {
-        "estado": "Error al recopilar datos",
-        "codigo_caso": case_code
-      };
-
-      let description = `❌ Ocurrió un error al registrar los datos del caso\n\n`;
-      description += `🔑 Código de intento: **${case_code}**\n\n`;
-      description += `Por favor, contacte directamente al (+52) 55-3141-1891 para registrar su caso. 🙏\n`;
-
-      res.json({
-        raw: rawData,
-        markdown: "...",
-        type: "markdown",
-        desc: description
-      });
-    }
-  } catch (error) {
-    console.error("Error collecting case data:", error);
-    
-    const rawData = {
-      "error": "Error interno del sistema",
-      "mensaje": error.message,
-      "timestamp": new Date().toISOString()
-    };
-
-    const description = `❌ Error interno del sistema\n\n` +
-      `Ocurrió un error inesperado. Por favor contacte al (+52) 55-3141-1891 para asistencia.\n\n` +
-      `Código de error: ${error.message}`;
-
-    res.status(500).json({
-      raw: rawData,
-      markdown: "...",
-      type: "markdown",
-      desc: description
-    });
-  }
-});
-
-// Route to create/schedule a legal consultation appointment (renamed from /plugin-law)
+// Route to create/schedule a legal consultation appointment with case information
 app.post('/create-appointment', async (req, res) => {
   try {
     const {
@@ -213,11 +83,14 @@ app.post('/create-appointment', async (req, res) => {
       numero_contacto,
       email,
       fecha,
-      hora
+      hora,
+      tipo_caso,
+      resumen_caso,
+      urgencia
     } = req.body;
 
     // Validate required fields
-    if (!nombre || !numero_contacto || !email || !fecha || !hora) {
+    if (!nombre || !numero_contacto || !email || !fecha || !hora || !tipo_caso || !resumen_caso || !urgencia) {
       const rawData = {
         "error": "Campos requeridos faltantes",
         "campos_faltantes": []
@@ -228,6 +101,9 @@ app.post('/create-appointment', async (req, res) => {
       if (!email) rawData.campos_faltantes.push("email");
       if (!fecha) rawData.campos_faltantes.push("fecha");
       if (!hora) rawData.campos_faltantes.push("hora");
+      if (!tipo_caso) rawData.campos_faltantes.push("tipo_caso");
+      if (!resumen_caso) rawData.campos_faltantes.push("resumen_caso");
+      if (!urgencia) rawData.campos_faltantes.push("urgencia");
 
       const description = `❌ Error: Faltan campos requeridos para agendar la consulta\n\n` +
         `Por favor proporcione la siguiente información:\n` +
@@ -242,52 +118,90 @@ app.post('/create-appointment', async (req, res) => {
     }
 
     // Log received data
-    console.log("Received consultation data:");
+    console.log("Received consultation and case data:");
     console.log("Nombre del cliente: ", nombre);
     console.log("Número de contacto: ", numero_contacto);
     console.log("Email: ", email);
     console.log("Fecha de consulta: ", fecha);
     console.log("Hora de consulta: ", hora);
+    console.log("Tipo de caso: ", tipo_caso);
+    console.log("Resumen del caso: ", resumen_caso);
+    console.log("Urgencia: ", urgencia);
 
-    // Get case count and generate consultation code
+    // Get case count and generate codes
     const num_registros = await obtenerNumeroFilas();
     const consultation_code = `LAWCONS${num_registros}`;
+    const case_code = `CASE${num_registros}`;
 
-    // Create new consultation data
+    // Create case data object
+    const case_data = {
+      codigo_caso: case_code,
+      codigo_consulta: consultation_code,
+      nombre_cliente: nombre,
+      numero_contacto: numero_contacto,
+      email: email,
+      fecha_consulta: fecha,
+      hora_consulta: hora,
+      tipo_caso: tipo_caso,
+      resumen_caso: resumen_caso,
+      urgencia: urgencia.toLowerCase(),
+      fecha_registro: new Date().toISOString()
+    };
+
+    // Create consultation row data
     const row_data = [
       consultation_code,
+      case_code,
       nombre,
       numero_contacto,
       email,
       fecha,
-      hora
+      hora,
+      tipo_caso,
+      resumen_caso,
+      urgencia.toLowerCase()
     ];
 
-    // Add consultation to system
+    // Store case data and add consultation
+    const response_store = await guardarDatosRecopilados(case_data);
     const response_add_row = await agregarFila(row_data);
 
-    if (response_add_row) {
+    if (response_store && response_add_row) {
       // Success response
       const rawData = {
-        "estado_consulta": "Agendada exitosamente",
+        "estado": "Consulta y caso registrados exitosamente",
         "codigo_consulta": consultation_code,
+        "codigo_caso": case_code,
         "datos_consulta": {
           "nombre_cliente": nombre,
           "email": email,
           "telefono": numero_contacto,
           "fecha_consulta": fecha,
           "hora_consulta": hora
+        },
+        "datos_caso": {
+          "tipo_caso": tipo_caso,
+          "resumen_caso": resumen_caso,
+          "urgencia": urgencia
         }
       };
 
-      let description = `⚖️ ¡Su consulta legal ha sido agendada exitosamente!\n\n`;
-      description += `🔑 Código de consulta: **${consultation_code}**\n\n`;
-      description += `📋 Detalles de su consulta legal:\n`;
+      const urgenciaLower = urgencia.toLowerCase();
+      const emoji = urgencyEmoji[urgenciaLower] || '⚠️';
+
+      let description = `✅ ¡Su consulta legal y caso han sido registrados exitosamente!\n\n`;
+      description += `🔑 Código de consulta: **${consultation_code}**\n`;
+      description += `🔑 Código de caso: **${case_code}**\n\n`;
+      description += `📋 Detalles de su consulta:\n`;
       description += `• 👤 Nombre del cliente: ${nombre}\n`;
       description += `• 📞 Teléfono: ${numero_contacto}\n`;
       description += `• 📧 Email: ${email}\n`;
       description += `• 📆 Fecha de consulta: ${fecha}\n`;
       description += `• ⏰ Hora de consulta: ${hora}\n\n`;
+      description += `📋 Información del caso:\n`;
+      description += `• ⚖️ Tipo de caso: ${tipo_caso}\n`;
+      description += `• 📝 Resumen: ${resumen_caso}\n`;
+      description += `• ${emoji} Urgencia: ${urgencia.toUpperCase()}\n\n`;
       description += `Modalidad: Videollamada legal\n`;
       description += `📞 Teléfono del bufete: (+52) 55-3141-1891\n`;
       description += `🕐 Horarios de atención: Lunes-Viernes 9:00-18:00\nFines de semana únicamente para asuntos urgentes y bajo confirmación expresa.\n\n`;
@@ -302,26 +216,39 @@ app.post('/create-appointment', async (req, res) => {
     } else {
       // Failure response
       const rawData = {
-        "estado_consulta": "No se pudo agendar",
+        "estado": "Error al procesar la solicitud",
         "codigo_consulta": consultation_code,
+        "codigo_caso": case_code,
         "datos_consulta": {
           "nombre_cliente": nombre,
           "email": email,
           "telefono": numero_contacto,
           "fecha_consulta": fecha,
           "hora_consulta": hora
+        },
+        "datos_caso": {
+          "tipo_caso": tipo_caso,
+          "resumen_caso": resumen_caso,
+          "urgencia": urgencia
         }
       };
 
-      let description = `❌ Ocurrió un error, y no pudimos agendar su consulta legal\n\n`;
-      description += `🔑 Código de intento: **${consultation_code}**\n\n`;
+      const urgenciaLower = urgencia.toLowerCase();
+      const emoji = urgencyEmoji[urgenciaLower] || '⚠️';
+
+      let description = `❌ Ocurrió un error al procesar su solicitud\n\n`;
+      description += `🔑 Código de intento (consulta): **${consultation_code}**\n`;
+      description += `🔑 Código de intento (caso): **${case_code}**\n\n`;
       description += `📋 Detalles que intentó registrar:\n`;
       description += `• 👤 Nombre del cliente: ${nombre}\n`;
       description += `• 📞 Teléfono: ${numero_contacto}\n`;
       description += `• 📧 Email: ${email}\n`;
       description += `• 📆 Fecha deseada: ${fecha}\n`;
-      description += `• ⏰ Hora deseada: ${hora}\n\n`;
-      description += `Por favor, contacte a nuestro departamento de citas al (+52) 55-3141-1891 o intente nuevamente. 🙏 \n\n`;
+      description += `• ⏰ Hora deseada: ${hora}\n`;
+      description += `• ⚖️ Tipo de caso: ${tipo_caso}\n`;
+      description += `• 📝 Resumen: ${resumen_caso}\n`;
+      description += `• ${emoji} Urgencia: ${urgencia.toUpperCase()}\n\n`;
+      description += `Por favor, contacte directamente al (+52) 55-3141-1891 para registrar su caso y consulta. 🙏\n\n`;
 
       res.json({
         raw: rawData,
@@ -359,7 +286,6 @@ app.get('/health', (req, res) => {
     "message": "Legal consultation server is running",
     "timestamp": new Date().toISOString(),
     "endpoints": {
-      "case_information": "/case-information",
       "create_appointment": "/create-appointment",
       "health": "/health"
     }
@@ -369,8 +295,7 @@ app.get('/health', (req, res) => {
     `🖥️ Estado: OK\n` +
     `⏰ Timestamp: ${rawData.timestamp}\n\n` +
     `📡 Endpoints disponibles:\n` +
-    `• POST /case-information - Recopilar datos del caso\n` +
-    `• POST /create-appointment - Agendar consulta\n` +
+    `• POST /create-appointment - Agendar consulta con información del caso\n` +
     `• GET /health - Verificar estado del servidor`;
 
   res.json({
@@ -386,8 +311,7 @@ app.listen(PORT, (error) => {
   if (!error) {
     console.log(`Legal consultation server running on http://localhost:${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/health`);
-    console.log(`Data collection: POST http://localhost:${PORT}/case-information`);
-    console.log(`Create appointment: POST http://localhost:${PORT}/create-appointment`);
+    console.log(`Create appointment with case info: POST http://localhost:${PORT}/create-appointment`);
   } else {
     console.log("Error occurred, server can't start", error);
   }
